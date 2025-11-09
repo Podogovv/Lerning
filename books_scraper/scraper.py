@@ -2,9 +2,10 @@ import time
 import requests
 import schedule
 import sys
+import pytest
 from bs4 import BeautifulSoup
-from pprint import pprint
 from urllib.parse import urljoin
+
 
 def get_book_data(url: str) -> dict:
     """
@@ -15,9 +16,9 @@ def get_book_data(url: str) -> dict:
         - рейтинг;
         - количество в наличии;
         - характеристики из таблицы Product Information.
-   
+
     Аргумент: url (str): URL web-страницы.
-    
+
     Возвращает словарь с ключами:
             - "title" (str): Название книги.
             - "description" (str | None): Описание книги (если присутствует).
@@ -28,20 +29,20 @@ def get_book_data(url: str) -> dict:
     """
     response = requests.get(url)
     response.raise_for_status()
-    
-    response.encoding = 'utf-8' # Декодирование в UTF-8
-    
+
+    response.encoding = 'utf-8'  # Декодирование в UTF-8
+
     soup = BeautifulSoup(response.text, 'html.parser')
-    title = soup.find('h1').get_text(strip=True)    # Название книги
+    title = soup.find('h1').get_text(strip=True)  # Название книги
 
     # Описание книги
     description = None
     desc_header = soup.find('div', id='product_description')
     if desc_header and desc_header.find_next_sibling('p'):
         description = desc_header.find_next_sibling('p').get_text(strip=True)
-    
-    price = soup.find('p', class_='price_color').get_text(strip=True)   # Цена книги
-    availability = soup.find('p', class_='instock availability').get_text(strip=True)   # Наличие книги
+
+    price = soup.find('p', class_='price_color').get_text(strip=True)  # Цена книги
+    availability = soup.find('p', class_='instock availability').get_text(strip=True)  # Наличие книги
 
     # Рейтинг книги
     rating_element = soup.find('p', class_='star-rating')
@@ -63,7 +64,8 @@ def get_book_data(url: str) -> dict:
         'rating': rating,
         'description': description,
         'product_information': product_info,
-          }
+    }
+
 
 def print_book_data(data: dict) -> None:
     """
@@ -71,8 +73,8 @@ def print_book_data(data: dict) -> None:
 
     Аргумент: data (dict): Словарь, возвращённый функцией get_book_data().
     """
-    sys.stdout.reconfigure(encoding='utf-8') # Вывод в UTF-8
-    
+    sys.stdout.reconfigure(encoding='utf-8')  # Вывод в UTF-8
+
     print("\n" + "-" * 50)
     print(f"  {data['title']}")
     print("-" * 50)
@@ -101,7 +103,7 @@ def scrape_books(url: str, is_save: bool = False) -> list:
     Возвращает:
         list: Список словарей с данными о книгах.
     """
-    
+
     all_books = []
     page_num = 1
 
@@ -157,7 +159,7 @@ def scheduler (url: str, time_str: str = "19:00"):
         time_str (str): Время запуска в 19:00.
     """
     def time():
-        scrape_books(url, is_save=True) 
+        scrape_books(url, is_save=True)
 
     schedule.every().day.at(time_str).do(time)
     print(f" Планировщик запущен. \n")
